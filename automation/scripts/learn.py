@@ -43,6 +43,12 @@ import shutil
 import sys
 from pathlib import Path
 
+# Windows consoles default to a legacy code page; print the arrows and ticks safely.
+for _stream in (sys.stdout, sys.stderr):
+    if hasattr(_stream, "reconfigure"):
+        _stream.reconfigure(encoding="utf-8", errors="replace")
+
+
 SKILL_DIR = Path(__file__).resolve().parent.parent
 CATEGORIES = ["data-model", "stack", "security", "feature", "solution", "process", "integration", "ui"]
 OUTCOMES = {"worked", "failed", "mixed", "baseline"}

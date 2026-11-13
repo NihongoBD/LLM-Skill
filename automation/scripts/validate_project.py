@@ -26,6 +26,12 @@ import subprocess
 import sys
 from pathlib import Path
 
+# Windows consoles default to a legacy code page; print the arrows and ticks safely.
+for _stream in (sys.stdout, sys.stderr):
+    if hasattr(_stream, "reconfigure"):
+        _stream.reconfigure(encoding="utf-8", errors="replace")
+
+
 MARKER = "AUTOMATION_STATUS.md"
 REQUIRED_ROOT = ["README.md", "AGENTS.md", "CLAUDE.md", MARKER, ".env.example", ".gitignore"]
 REQUIRED_DOCS = ["PRD.md", "DESIGN_SYSTEM.md", "ARCHITECTURE.md", "DATABASE.md", "API.md", "SECURITY_REPORT.md"]

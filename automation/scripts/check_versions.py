@@ -26,6 +26,12 @@ import urllib.error
 import urllib.parse
 import urllib.request
 
+# Windows consoles default to a legacy code page; print the arrows and ticks safely.
+for _stream in (sys.stdout, sys.stderr):
+    if hasattr(_stream, "reconfigure"):
+        _stream.reconfigure(encoding="utf-8", errors="replace")
+
+
 NPM_REGISTRY = "https://registry.npmjs.org/"
 NPM_DOWNLOADS = "https://api.npmjs.org/downloads/point/last-week/"
 PYPI = "https://pypi.org/pypi/{}/json"

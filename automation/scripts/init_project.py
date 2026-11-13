@@ -27,6 +27,12 @@ import subprocess
 import sys
 from pathlib import Path
 
+# Windows consoles default to a legacy code page; print the arrows and ticks safely.
+for _stream in (sys.stdout, sys.stderr):
+    if hasattr(_stream, "reconfigure"):
+        _stream.reconfigure(encoding="utf-8", errors="replace")
+
+
 SKILL_DIR = Path(__file__).resolve().parent.parent
 ASSETS = SKILL_DIR / "assets"
 MARKER = "AUTOMATION_STATUS.md"
