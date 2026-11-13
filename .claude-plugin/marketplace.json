@@ -1,0 +1,16 @@
+{
+  "name": "nihongobd",
+  "owner": {
+    "name": "NihongoBD"
+  },
+  "description": "NihongoBD agent skills, as an installable Claude Code plugin.",
+  "plugins": [
+    {
+      "name": "nihongobd-skills",
+      "source": "./",
+      "description": "Agent skills from NihongoBD: automation (idea list to researched, documented, built, hardened and red-teamed projects, with a learning knowledge base).",
+      "category": "engineering",
+      "keywords": ["automation", "project-generator", "scaffolding", "security", "skills"]
+    }
+  ]
+}

@@ -1,0 +1,13 @@
+{
+  "name": "nihongobd-skills",
+  "version": "2.1.1",
+  "description": "Agent skills from NihongoBD: automation turns a list of app ideas into researched, documented, built, hardened and red-teamed projects, and learns from every project.",
+  "author": {
+    "name": "NihongoBD"
+  },
+  "repository": "https://github.com/NihongoBD/LLM-Skill",
+  "keywords": ["automation", "project-generator", "scaffolding", "security", "skills"],
+  "skills": [
+    "./skills/automation"
+  ]
+}
