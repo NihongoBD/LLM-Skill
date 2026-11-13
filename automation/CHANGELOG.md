@@ -3,6 +3,9 @@
 Versions follow: patch = wording or defaults, minor = new rules or steps, major = removed or reversed rules.
 Approved suggestions from knowledge/SUGGESTIONS.md are recorded here with their ID.
 
+## 2.1.1 — 2026-11-13
+- Fixed: `init_project.py` and `validate_project.py` crashed on Windows consoles (cp1252) when printing → and ✗; all four scripts now write UTF-8 to stdout/stderr.
+
 ## 2.1.0 — 2026-11-13
 - Added the complete workflow to the skill: "Workflow at a glance" map in SKILL.md (same numbering as the picture), WORKFLOW.md with diagrams and a table of what each box does, and workflow.html, a picture that opens in any browser (light and dark mode).
 - Added a table linking every workflow box to its phase and tools.
