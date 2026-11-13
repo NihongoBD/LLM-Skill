@@ -1,0 +1,26 @@
+---
+name: compound-fix
+description: Fixes bugs, failing tests and security findings in {{PROJECT_NAME}} so the whole class of problem is closed — failing test first, root-cause fix, sweep for the same pattern elsewhere, prevention guard, and a lesson in docs/solutions/. Use after debugging has found a root cause, for every SECURITY_REPORT finding, for review comments marked P1/P2, or whenever the user reports something broken.
+---
+
+# Compound fix
+
+A fix is complete when this bug cannot come back and its siblings are gone too.
+
+## Steps
+
+1. **Failing test first.** Reproduce the bug as an automated test (from `debugging`, or write it now). For security findings, the test lives in `tests/security/` and is named after the finding (`SEC-004 organizer cannot read other organizer's attendees`).
+2. **Root cause.** State it in one sentence. If you cannot, go back to `debugging`.
+3. **Minimal correct fix** at the layer that owns the rule (an ownership bug is fixed in the service, not hidden in the UI). Keep unrelated refactors out.
+4. **Sweep for siblings.** Search the codebase for the same pattern (same helper misuse, same missing guard, same raw query style) and fix every instance, each with a test.
+5. **Prevent the class.** Add the cheapest guard that makes recurrence fail loudly: a lint rule, a stricter type, a shared helper used everywhere, a matrix-test row, a DB constraint, a CI check.
+6. **Verify.** The new tests pass, `pnpm verify` and `pnpm test:security` are green.
+7. **Record.**
+   - Security finding: update `docs/SECURITY_REPORT.md` (fix commit, regression test, status Fixed → Verified after a re-attack).
+   - Lesson: `docs/solutions/<area>/<slug>.md` with symptom, root cause, fix, prevention.
+   - Shared lesson: if the automation skill is available (see `AUTOMATION_STATUS.md`), first run `learn.py suggest <bug class>` to reuse a known fix, then record this one with `learn.py add --outcome worked` (category `security` for findings, `solution` for bugs). A fix that did not hold is recorded with `--outcome failed`.
+8. **Review and merge** through `pr-reviewer`.
+
+## Commit format
+
+`fix(<module>): <what was wrong> (<finding or issue ID>)` — body explains the root cause and the prevention guard.

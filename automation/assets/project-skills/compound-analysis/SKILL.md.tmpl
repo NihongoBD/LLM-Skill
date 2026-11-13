@@ -1,0 +1,41 @@
+---
+name: compound-analysis
+description: Analyses a plan, a change or the whole codebase of {{PROJECT_NAME}} for impact, security risk, performance, architecture drift, docs-vs-code drift, test gaps and technical debt, and returns prioritised findings. Use after writing a plan, before large refactors, when something feels slow or fragile, when asked for a code health or tech-debt review, or periodically between features.
+---
+
+# Compound analysis
+
+## Modes
+
+**Plan analysis** (before `compound-work`): read the plan and the code it touches.
+**Codebase analysis** (on request or every ~5 features): scan the whole project.
+
+## What to check
+
+| Area | Questions |
+|---|---|
+| Impact | What else uses these files, tables, endpoints, components? Which tests cover them? Which other plans in progress touch them? |
+| Security | New input, new endpoint, new role path, new file/URL handling? Is every new path guarded, validated, rate limited, audited? Does it create an IDOR or race? |
+| Data | Migration safe on existing data? Locks on big tables? Constraint enforcing each business rule? |
+| Performance | N+1 queries, missing indexes for new filters/sorts, unbounded lists, heavy work in request path that belongs in a job, bundle size growth, unnecessary client components |
+| Architecture | Layer violations (ORM outside repositories, logic in controllers, fetch in components), circular imports, duplicated logic that belongs in a shared helper |
+| Docs drift | API.md vs OpenAPI, DATABASE.md vs ORM schema, PRD vs implemented behaviour |
+| Tests | ACs without tests, untested business rules, missing negative authz tests, flaky tests |
+| Debt | Large files/functions, dead code, TODOs, outdated dependencies, warnings |
+
+Use tools where they help: `pnpm lint`, `pnpm typecheck`, coverage report, `pnpm audit:deps`, query logging on integration tests, bundle analyser, `git log` churn for hotspots.
+
+## Output
+
+Findings ordered by priority, each with evidence and a concrete recommendation:
+
+```
+[P1] Security — POST /events/:id/publish has no ownership check (events.service.ts:88). Add assertOwnerOrAdmin; add IDOR test.
+[P2] Performance — GET /attendees runs one query per row (N+1). Use include/select with a join; assert query count.
+[P3] Drift — API.md lacks DELETE /tickets/:id.
+[P4] Debt — events.controller.ts is 420 lines; split by sub-resource.
+```
+
+P1 = must fix before merge/release · P2 = fix in this change · P3 = schedule · P4 = nice to have.
+
+For plan analysis, add the findings to the plan's "Risks and mitigations" and adjust its tasks. For codebase analysis, write `docs/plans/YYYY-MM-DD-analysis.md` and turn P1/P2 findings into plans.

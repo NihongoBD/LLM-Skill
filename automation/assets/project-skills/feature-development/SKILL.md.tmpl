@@ -1,0 +1,46 @@
+---
+name: feature-development
+description: Builds or changes one feature of {{PROJECT_NAME}} as a complete vertical slice (database, repository, service rules, validated and guarded API, UI, tests, docs), driving the compound ask, plan, analysis, work and review loop. Use for any PRD feature ID (F-…), any new screen or endpoint, or any request to add or change functionality.
+---
+
+# Feature development
+
+One feature ID at a time. Find it in `docs/PRD.md` with its acceptance criteria (AC) and business rules (BR).
+
+## Loop
+
+1. Unclear or conflicting requirements → `compound-ask`.
+2. `compound-plan` → `docs/plans/<date>-<feature-id>.md`.
+3. `compound-analysis` on the plan (impact, security, performance).
+4. `compound-work` executes the plan on a branch, or in a worktree under `.worktrees/` when features run in parallel.
+5. `pr-reviewer` → fix every P1/P2 → merge.
+6. Tick the feature in `AUTOMATION_STATUS.md`.
+
+## Vertical slice checklist
+
+**Data**: schema change (if any) with constraints and indexes enforcing the BRs; migration; seed data for the feature.
+
+**Backend**
+- Repository: the only place that touches the ORM; selects explicit fields.
+- Service: business rules, transactions, row locks for capacity/stock/booking races, ownership checks (owner or admin), domain events.
+- Input DTOs: types, lengths, formats, enums; unknown fields rejected. Output DTOs expose only allowed fields (never password hashes, tokens, internal flags).
+- Controller: route, role guard, rate-limit tier, CAPTCHA on public forms, `Idempotency-Key` for payments/orders/bookings, audit log for admin and sensitive actions.
+- OpenAPI annotations and the `docs/API.md` row.
+
+**Frontend**
+- Route in the right role panel, navigation entry, page title.
+- Built only from design-system components and tokens; forms share the Zod schema with the API.
+- States: loading skeleton, empty state with an action, error with retry, success feedback; confirm dialog for destructive actions.
+- Accessible: labels, keyboard path, focus management, contrast.
+- The UI hides actions a role cannot do, but the API remains the real gate.
+
+**Tests** (names include the feature ID)
+- Unit: every BR and edge case in the service.
+- Integration (API): each AC; validation failures; 401 without auth; 403 for every other role; 403/404 for another user's record (IDOR); 429 when the tier is exceeded.
+- E2E: the main happy path for the role.
+
+**Docs**: `docs/API.md`, `docs/DATABASE.md` and the PRD (if scope changed) updated in the same branch.
+
+## Done when
+
+All ACs have passing tests, `pnpm verify` and the feature's E2E test are green, `pr-reviewer` has no open P1/P2, and the docs match the code.

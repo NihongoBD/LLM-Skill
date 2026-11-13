@@ -1,0 +1,39 @@
+---
+name: debugging
+description: Systematic debugging for {{PROJECT_NAME}} — reproduce, isolate, find the root cause, then hand the fix to compound-fix. Use for any error, stack trace, failing or flaky test, broken build, "it works locally but not in CI", wrong data, slow endpoint, or unexpected UI behaviour.
+---
+
+# Debugging
+
+## 0. Search memory first
+
+Search `docs/solutions/` for the error message, module name and symptom. If a lesson matches, apply it and stop here.
+
+## 1. Reproduce
+
+- Write down the exact steps, inputs, account/role, environment and the expected vs actual result.
+- Turn it into the smallest failing automated test you can (unit if possible, integration or E2E if not). A bug you cannot reproduce is not ready to fix; add logging or tracing until you can.
+
+## 2. Isolate
+
+- Narrow the layer: UI → API client → controller → service → repository → database → external provider.
+- Use the request ID to follow one request through the logs.
+- Inspect data with the read-only database MCP server or `psql` against the dev DB.
+- For UI bugs: Playwright trace viewer, browser console and network panel.
+- For regressions: `git bisect` with the failing test as the check.
+- Remove variables: fresh `pnpm db:reset`, cleared caches, single worker, fixed time and random seeds.
+
+## 3. Find the root cause
+
+Form one hypothesis at a time and test it. Ask "why" until the answer is a decision in the code or data, not a symptom ("the page crashed" → "the list was undefined" → "the API returned 403" → "the guard checked the wrong role constant").
+
+## 4. Hand over to `compound-fix`
+
+Pass the failing test, the root cause, and where else the same pattern might exist.
+
+## Never
+
+- Silence the error (empty catch, `?.` everywhere, `any` casts, `@ts-ignore`).
+- Disable, skip or loosen the test, a lint rule or a security control.
+- Add retries or sleeps to hide timing problems.
+- "Fix" production code by special-casing the test data.

@@ -1,0 +1,26 @@
+---
+name: setup-initialization
+description: Sets up and initialises {{PROJECT_NAME}} — monorepo, pinned dependencies, TypeScript, lint and format, git hooks, Docker Compose services on this project's ports, typed env validation, logging, error handling, health checks, CI and the command contract. Use when starting the repo, when tooling or CI is broken or missing, when adding a new app or package, or when a fresh clone does not run.
+---
+
+# Setup and initialisation
+
+Versions come from the stack table in `docs/ARCHITECTURE.md` (already verified). Do not upgrade or add packages from memory; check the registry first.
+
+## Steps
+
+1. **Workspace**: pnpm workspace + Turborepo; `apps/` and `packages/` as in `docs/ARCHITECTURE.md` §4. Root `package.json` with `packageManager`, `engines.node`, and an `.nvmrc`.
+2. **Dependency safety**: exact versions, lockfile committed, pnpm `onlyBuiltDependencies` allowlist so unknown packages cannot run install scripts.
+3. **TypeScript**: shared strict base config in `packages/config` (`strict`, `noUncheckedIndexedAccess`, `noImplicitOverride`).
+4. **Quality tools**: ESLint flat config (TypeScript, React, import order, a security plugin), Prettier, `.editorconfig`, Husky + lint-staged (lint, format, secret scan on staged files), commitlint for Conventional Commits.
+5. **Infra**: `infra/docker-compose.yml` with `name: {{PROJECT_SLUG}}`; Postgres on {{DB_PORT}}, Redis on {{REDIS_PORT}}, Mailpit on {{MAIL_PORT}} (SMTP) and {{MAIL_UI_PORT}} (UI), MinIO if the product stores files. Healthchecks, named volumes, credentials from `.env`. Bind ports to `127.0.0.1` only.
+6. **Config**: one env schema per app, validated at boot so the app fails fast with a clear message. `.env.example` lists every variable with a comment and marks REQUIRED ones; secrets have no defaults.
+7. **Backend bootstrap**: logger (pino) with request IDs and redaction of `password`, `token`, `authorization`, `cookie`; global exception filter returning problem+json; global validation (whitelist, reject unknown fields); helmet; CORS allowlist from env; body size limit; trusted-proxy setting (so client IPs for rate limiting cannot be spoofed); graceful shutdown; `/health` and `/health/ready`.
+8. **Frontend bootstrap**: app shell per role panel, design tokens wired to Tailwind, typed API client, error boundary, not-found page, security headers and CSP.
+9. **Command contract** in root `package.json`: `dev`, `infra:up`, `infra:down`, `lint`, `typecheck`, `test`, `test:e2e`, `test:security`, `build`, `verify`, `db:migrate`, `db:seed`, `db:reset`, `audit:deps` — exactly the names in `AGENTS.md`.
+10. **CI** (`.github/workflows/ci.yml`): install with frozen lockfile → lint → typecheck → test (Postgres/Redis service containers) → build → `audit:deps` → secret scan; E2E and security tests on pull requests. Pin third-party actions by commit SHA.
+11. **Dependency updates**: Renovate or Dependabot with grouped minor/patch updates and a minimum release age of 14 days.
+
+## Exit check
+
+From a fresh clone: README quick start works as written, `pnpm verify` is green, `pnpm infra:up` shows every service healthy. Commit `chore: project setup`.

@@ -1,0 +1,33 @@
+---
+name: compound-ask
+description: Turns a vague, incomplete or conflicting request for {{PROJECT_NAME}} into a precise, testable specification — answering what the docs already answer, deciding sensible defaults, and asking the human only what is truly blocking. Use before planning when a requirement is unclear, when the PRD is silent, when two documents disagree, or when the user asks for something in one line.
+---
+
+# Compound ask
+
+Goal: nothing ambiguous reaches `compound-plan`, and the human is asked as little as possible.
+
+## Steps
+
+1. **Restate** the request in one sentence with the feature ID (or propose a new ID).
+2. **List unknowns**: actors, data, rules, edge cases, limits, permissions, UI placement, notifications, success measure.
+3. **Answer from sources**, in order: `docs/PRD.md`, `docs/solutions/`, the other docs, existing code patterns, common practice in the domain.
+4. **Classify what remains**:
+   - *Decidable*: a sensible default exists and a wrong guess is cheap to change → decide it and record it as an assumption.
+   - *Blocking*: legal, money, data retention, irreversible actions, or anything the user clearly cares about → ask.
+5. **Ask** (only blocking items): at most 3 questions, each with 2–4 concrete options and your recommended default, so the user can answer in seconds. While waiting, continue with other work.
+6. **Write the result**:
+   - New or refined user story and Given/When/Then acceptance criteria in `docs/PRD.md` §5.
+   - Assumptions in `docs/PRD.md` §12 (marked Assumption) so they can be reviewed later.
+   - Conflicts between docs resolved in the docs themselves, not just in your head.
+
+## Output (in the plan or the chat)
+
+```
+Request: …
+Feature: F-…
+Decided (assumptions): …
+Asked (blocking): …
+Acceptance criteria: AC1 … AC2 …
+Ready for: compound-plan
+```

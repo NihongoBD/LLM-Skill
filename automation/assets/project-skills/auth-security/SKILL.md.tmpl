@@ -1,0 +1,44 @@
+---
+name: auth-security
+description: Authentication, authorisation and application security for {{PROJECT_NAME}} — login, sessions and tokens, MFA, RBAC with ownership checks, validation, CSRF, CORS, security headers, tiered rate limits, CAPTCHA, bot defence and IP bans, uploads, secrets, audit logs, plus the hardening audit and the red-team playbook for attacking the local build. Use for any auth or permission work, any security control, a hardening pass, a pentest or "act like a hacker" request, or when adding endpoints that handle sensitive data.
+---
+
+# Auth and security
+
+Two reference files carry the detail:
+
+- `references/security-baseline.md` — every control this project must have, how to build it, and how to test it.
+- `references/red-team.md` — rules of engagement and the attack playbook for the local build.
+
+## Building the foundation (before any feature)
+
+Implement in this order, each with tests, committing after each:
+
+1. Password hashing (argon2id), user model, signup with email verification.
+2. Login, sessions or short-lived access token + rotating refresh token in httpOnly cookies; logout; session list and revoke.
+3. Password reset (single-use hashed token, short expiry, all sessions revoked on reset).
+4. MFA (TOTP) for admin roles, with recovery codes.
+5. RBAC guard + ownership helper used by every service; deny by default.
+6. Global validation (reject unknown fields), output serialisation allowlists.
+7. Security headers and CSP, CORS allowlist, CSRF protection for cookie-authenticated writes.
+8. Redis rate limiter with the tiers from `docs/API.md` §4, 429 + `Retry-After`, and a temporary IP ban list.
+9. CAPTCHA service (server-side token verification) and bot defence (honeypot field, minimum submit time).
+10. Audit log (append-only) for admin and sensitive actions.
+11. Upload policy (size, type by content, random names, private storage, signed URLs).
+
+Then write the role-permission matrix test skeleton (`tests/security/permission-matrix`): every endpoint × every role, with the expected status. Features fill their rows as they land.
+
+## Hardening audit (Phase 7)
+
+Walk every section of `references/security-baseline.md`. For each control, find the code and the test that prove it. Anything missing or untested becomes a `compound-work` task. Record the result in `docs/SECURITY_REPORT.md`.
+
+## Red team (Phase 8)
+
+Follow `references/red-team.md` exactly, including its scope rule: only this project's localhost stack is ever a target.
+
+## Rules that never bend
+
+- Never weaken a control to make a test or feature pass; fix the feature.
+- Same error message for "unknown user" and "wrong password"; constant-time comparisons for tokens.
+- Secrets only from env; never logged; never sent to the client bundle.
+- Every new endpoint: auth decision, role, ownership, validation, rate tier, and a negative test.

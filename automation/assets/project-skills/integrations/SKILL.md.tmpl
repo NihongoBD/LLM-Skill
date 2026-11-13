@@ -1,0 +1,42 @@
+---
+name: integrations
+description: Adds and maintains third-party integrations for {{PROJECT_NAME}} — email, SMS, payments, file storage, PDF and QR generation, calendar, maps, push notifications, analytics — each behind an adapter with a fake for tests, sandbox credentials in development, retries, timeouts and verified webhooks. Use whenever a feature needs an external service or a provider must be added, swapped or debugged.
+---
+
+# Integrations
+
+## Pattern (every provider)
+
+```
+apps/api/src/integrations/<capability>/
+├── <capability>.port.ts          interface the services depend on (e.g. PaymentGateway)
+├── providers/<provider>.ts       real implementation
+├── providers/fake.ts             in-memory fake used by tests and local dev when no keys
+├── <capability>.module.ts        picks the provider from env
+└── <capability>.spec.ts          contract tests run against the fake (and the sandbox when keys exist)
+```
+
+Services depend on the port, never on a provider SDK, so swapping providers touches one folder.
+
+## Rules
+
+- Config from env, validated at boot; sandbox/test keys in development; `.env.example` documents every variable. Missing keys → the fake provider plus a startup warning, so the build keeps moving.
+- Outbound calls: timeouts, retries with exponential backoff and jitter for idempotent operations only, circuit-breaker style fail-fast when a provider is down, and queueing (background jobs) for anything slow such as emails, SMS, PDFs and exports.
+- Inbound webhooks: verify signature, timestamp window, de-duplicate by event ID, process idempotently, respond fast and do the work in a job.
+- Payments: server computes amounts; idempotency keys; order confirmed only by a verified callback/webhook, never by the browser redirect.
+- Never log full payloads containing personal or payment data; store provider IDs, not card data.
+- Never call real third-party endpoints from tests or from red-team runs; use the fake or the provider's sandbox.
+
+## Common choices (verify current options and pricing at decision time)
+
+| Capability | Typical options | Local dev |
+|---|---|---|
+| Email | SMTP, Resend, Postmark, Amazon SES | Mailpit on :{{MAIL_PORT}} (UI :{{MAIL_UI_PORT}}) |
+| SMS / OTP | Twilio or a local-market SMS gateway | Fake provider logging to console |
+| Payments | Stripe internationally; regional gateways where needed (for Bangladesh, e.g. SSLCommerz or bKash) | Provider sandbox |
+| File storage | S3-compatible (AWS S3, Cloudflare R2) | MinIO container |
+| PDF / QR (tickets, receipts) | Server-side PDF and QR libraries | Same |
+| Calendar | ICS file generation | Same |
+| Push notifications | Expo push / FCM / APNs | Fake provider |
+
+Record each chosen provider, why, and its env variables in `docs/ARCHITECTURE.md` and the PRD integrations section.

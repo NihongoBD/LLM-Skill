@@ -1,0 +1,52 @@
+---
+name: compound-work
+description: Executes an approved plan from docs/plans/ in {{PROJECT_NAME}} — on its own branch or git worktree, test-first where possible, one small verified commit per task, docs kept in sync, then hands over to pr-reviewer and records lessons. Use when a plan is approved, when the user says implement, build it or do the work, or when parallel feature agents start.
+---
+
+# Compound work
+
+## Start
+
+1. Open the plan; set Status: In progress.
+2. Create the workspace:
+   - Alone: `git switch -c feat/<feature-id>-<slug>` from an up-to-date `main`.
+   - In parallel with other agents: `git worktree add .worktrees/<feature-id> -b feat/<feature-id>-<slug>` and work only inside that folder (it is git-ignored). Use a separate test database name; do not start a second copy of the Docker services.
+3. `pnpm install` and `pnpm verify` to confirm a green starting point.
+
+## For each task in the plan
+
+1. Write or update the test that proves the task (from the acceptance criterion). See it fail for the right reason.
+2. Implement the smallest change that makes it pass, following `AGENTS.md` and the layer rules.
+3. `pnpm verify` (and the relevant E2E test if UI changed).
+4. Commit: `feat(<module>): <feature-id> <what changed>` (or `fix`, `refactor`, `test`, `docs`).
+5. Tick the task in the plan.
+
+If a task turns out wrong or bigger than planned, update the plan first (with a note why), then continue. If you discover a bug outside the plan, record it as a new plan or finding instead of silently widening the scope.
+
+## Finish
+
+1. Update `docs/API.md`, `docs/DATABASE.md` and the PRD if behaviour changed.
+2. Rebase on `main`, `pnpm verify`, run the feature's E2E and `pnpm test:security`.
+3. Hand over to `pr-reviewer`; fix every P1/P2 it reports; merge.
+4. Set the plan Status: Done; tick the feature in `AUTOMATION_STATUS.md`; remove the worktree (`git worktree remove .worktrees/<feature-id>`) and the merged branch.
+
+## Compound step (do not skip)
+
+If anything non-obvious was learned — a library quirk in this version, a pattern that worked well, a mistake that cost time — write `docs/solutions/<area>/<slug>.md`:
+
+```
+Problem / context · What we tried · What worked and why · How to avoid next time (test, lint rule, helper)
+```
+
+Short and searchable; future plans read these before starting.
+
+Share it beyond this project too (`AUTOMATION_STATUS.md` names the automation skill folder; if that folder exists on this machine, `<skill>/scripts/learn.py` is available. If not, skip these steps.):
+
+```bash
+python <skill>/scripts/learn.py add --category <data-model|stack|security|feature|solution|process|integration|ui> \
+  --title "<reusable title, no project names>" --tags <a,b,c> --project {{PROJECT_SLUG}} \
+  --outcome <worked|failed> --evidence "<test file or finding id>" \
+  --body "Problem: … Solution: … Use when: … Avoid when: …"
+```
+
+Record failures as well as successes, and never include secrets, customer data or internal URLs.

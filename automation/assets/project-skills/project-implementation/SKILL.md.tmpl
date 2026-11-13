@@ -1,0 +1,40 @@
+---
+name: project-implementation
+description: Entry point for all work on {{PROJECT_NAME}}. Reads AUTOMATION_STATUS.md, finds the next unfinished step and routes to the right project skill. Use at the start of every session, and whenever the user says build, continue, resume, what's next or finish the project, or gives a task without saying how to do it.
+---
+
+# Project implementation (router)
+
+1. Read `AGENTS.md` and `AUTOMATION_STATUS.md`.
+2. Find the first unticked box. If the user gave a specific task, do that task instead, but still respect the order rules below.
+3. Pick the skill from the table, follow it, then tick the box and commit.
+
+| Situation | Skill |
+|---|---|
+| Repo or tooling not set up, CI missing, command contract missing | `setup-initialization` |
+| Auth, roles, rate limits, CAPTCHA, headers, any security control | `auth-security` |
+| Build or change a PRD feature | `feature-development` (it drives the compound loop) |
+| Requirement unclear | `compound-ask` |
+| Need a plan before coding | `compound-plan` |
+| Need impact, risk, performance or drift analysis | `compound-analysis` |
+| Executing an approved plan | `compound-work` |
+| A bug, failing test or security finding | `debugging`, then `compound-fix` |
+| Email, payments, storage, SMS, other providers | `integrations` |
+| MCP servers for development, or a product MCP server | `mcp-connection` |
+| Tests, coverage, E2E, accessibility, performance | `testing-qa` |
+| Before any merge | `pr-reviewer` |
+| Hardening audit or attacking the local build | `auth-security` (`references/security-baseline.md`, `references/red-team.md`) |
+
+## Best-solution check
+
+Before an important decision (data structure, library, provider, auth approach, fix for a class of bug), ask the automation knowledge base if it is available (`AUTOMATION_STATUS.md` names its folder): `python <skill>/scripts/learn.py suggest <topic>`. Lead with the best proven option and its evidence when you explain the choice to the user.
+
+## Order rules
+
+- Setup → security foundation → data layer → features → integrations → MCP → QA → hardening → red team.
+- No feature work before the security foundation exists; features plug into it rather than inventing their own checks.
+- Schema changes happen one at a time on `main`.
+
+## Every step ends with
+
+`pnpm verify` green, docs updated, `AUTOMATION_STATUS.md` ticked, a conventional commit. If something fails, fix the root cause before moving on; never continue on a red build.

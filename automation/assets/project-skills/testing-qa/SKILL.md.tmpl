@@ -1,0 +1,48 @@
+---
+name: testing-qa
+description: Testing and quality assurance for {{PROJECT_NAME}} — unit, integration, end-to-end per role, role-permission matrix, accessibility, performance budgets, coverage gates and the final QA checklist. Use when writing or fixing tests, when coverage or CI is red, before a release, or when asked to check quality, accessibility or performance.
+---
+
+# Testing and QA
+
+## Test pyramid and locations
+
+| Layer | Tool | Location | Covers |
+|---|---|---|---|
+| Unit | Vitest | next to the code (`*.spec.ts`) | business rules, validators, utils, hooks |
+| Integration | Vitest + Supertest against a real test DB | `apps/api/test/` | every endpoint: success, validation, 401, 403 per role, IDOR, 429 |
+| E2E | Playwright | `tests/e2e/<role>/` | the main journeys of every role through the real UI |
+| Accessibility | Playwright + axe | `tests/e2e/a11y/` | every page template, zero serious/critical violations |
+| Security | Supertest / Playwright | `tests/security/` | red-team regressions and the permission matrix |
+| Performance | Lighthouse CI; optional k6 | `tests/load/` | budgets below |
+
+## Rules
+
+- Every acceptance criterion in `docs/PRD.md` maps to at least one test; put the feature ID in the test name (`F-EVT-01 AC2 rejects past dates`).
+- Test behaviour through public interfaces, not private internals; no snapshot tests of whole pages.
+- Test data from factories; each test sets up what it needs; the DB is reset per test file (transaction rollback or truncate).
+- Integrations use their fake providers; tests never call real third-party services.
+- No sleeps; wait for conditions. No retries to hide flakiness: a flaky test is a bug, fix it with `debugging`.
+- Never delete, skip or weaken an assertion to get green.
+
+## Permission matrix
+
+`tests/security/permission-matrix.spec.ts` is generated from a table of every endpoint × every role (plus anonymous) with the expected status. When an endpoint is added, its row is added in the same change; the test fails if any route is missing from the table.
+
+## Gates (CI fails below these)
+
+- Coverage: ≥ 80% lines overall; ≥ 90% for `modules/*/*.service.ts`; 100% of business rules `BR-xx` have tests.
+- E2E: every role's main journey passes on Chromium; run Firefox/WebKit before release.
+- Accessibility: zero serious or critical axe violations.
+- Performance on public and panel pages (production build): Lighthouse Performance ≥ 90, Accessibility ≥ 95, Best Practices ≥ 95, SEO ≥ 90 for public pages; LCP < 2.5 s, CLS < 0.1, INP < 200 ms.
+- API: list endpoints p95 < 300 ms on seeded data; no N+1 queries (query count asserted in integration tests for list endpoints).
+
+## Final QA checklist
+
+- [ ] Fresh clone → README quick start works exactly as written
+- [ ] `pnpm verify`, `pnpm test:e2e`, `pnpm test:security` green
+- [ ] Every page: loading, empty, error, success states; keyboard-only path works; dark and light themes legible
+- [ ] Forms: validation messages, double-submit prevented, unsaved-changes guard
+- [ ] Mobile widths (360 px) usable for every panel
+- [ ] No console errors or warnings in the browser; no unhandled promise rejections in the API log
+- [ ] No placeholder text, lorem ipsum, mock data or TODOs in production paths

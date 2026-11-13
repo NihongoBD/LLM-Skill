@@ -1,0 +1,57 @@
+---
+name: compound-plan
+description: Writes an implementation plan for a feature, fix or refactor in {{PROJECT_NAME}} as a file in docs/plans/, grounded in the PRD, the architecture, existing code patterns and past lessons in docs/solutions/. Use before writing any non-trivial code, when the user asks "how should we build X", or when feature-development reaches its planning step.
+---
+
+# Compound plan
+
+A good plan makes the work boring: an agent with no other context can execute it step by step.
+
+## Research before writing
+
+1. The PRD entry: feature ID, acceptance criteria, business rules.
+2. `docs/solutions/`: lessons for this module or similar features (avoid repeating past mistakes).
+3. Existing code: the closest similar feature; reuse its patterns, components and helpers.
+4. Docs for the pinned versions of any library you will use (do not rely on memory for APIs).
+5. Shared knowledge from other projects: run `python <skill>/scripts/learn.py suggest <topic words>`. Prefer a **proven** entry, note its id under "Lessons applied", and explain in one line why it is the best fit (or why you chose otherwise). `AUTOMATION_STATUS.md` names the automation skill folder; if that folder exists on this machine, `<skill>/scripts/learn.py` is available. If not, skip these steps.
+
+## Plan file
+
+Path: `docs/plans/YYYY-MM-DD-<feature-id>-<short-slug>.md`
+
+```markdown
+# <Feature ID> <Title>
+Status: Draft | Approved | In progress | Done
+
+## Goal
+One paragraph; link PRD section.
+
+## Acceptance criteria
+AC1 … (copied from PRD) → test that will prove it
+
+## Approach
+Data changes · API changes (method, path, roles, tier) · UI changes (panel, route, components) · jobs/integrations
+
+## Files to touch
+- path — why (new/changed)
+
+## Security
+Auth decision · roles · ownership rule · validation · rate tier · CAPTCHA · audit log · new attack surface
+
+## Risks and mitigations
+Migrations, concurrency, performance (indexes, N+1), backwards compatibility
+
+## Tasks
+- [ ] 1. Small, verifiable step (one commit each)
+- [ ] 2. …
+
+## Lessons applied
+Links to docs/solutions entries used
+```
+
+## Rules
+
+- Tasks are small (one commit, under ~30 minutes each) and ordered so the build stays green after each.
+- Tests are written in the same task as the code they test, or before it.
+- If the plan changes the schema or shared packages, mark it **serial** (no parallel work on those files).
+- Run `compound-analysis` on the plan, then set Status: Approved.
